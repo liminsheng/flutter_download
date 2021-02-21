@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_download/routes/video_list_route.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      routes: {'videoList': (context) => VideoListRoute()},
       home: MyHomePage(title: 'Flutter Download Home Page'),
     );
   }
@@ -44,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Stack(
         children: [
           Image.asset(
-            "images/bg_home.jpg",
+            'images/bg_home.jpg',
             fit: BoxFit.contain,
           ),
           Container(
@@ -56,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Container(
                 margin: EdgeInsets.fromLTRB(25, 120, 0, 0),
                 child: Text(
-                  "Flutter Download",
+                  'Flutter Download',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 30,
@@ -66,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Container(
                 margin: EdgeInsets.fromLTRB(25, 0, 0, 0),
                 child: Text(
-                  "基于Flutter的视频下载示例",
+                  '基于Flutter的视频下载示例',
                   style: TextStyle(fontSize: 20, color: Colors.white),
                 ),
               ),
@@ -79,8 +81,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     crossAxisSpacing: 50,
                     childAspectRatio: 2,
                     children: [
-                      _buildCard("视频", Icons.live_tv, Colors.pinkAccent, () {}),
-                      _buildCard("下载", Icons.file_download_done,
+                      _buildCard('视频', Icons.live_tv, Colors.pinkAccent, () {
+                        Navigator.pushNamed(context, 'videoList');
+                      }),
+                      _buildCard('下载', Icons.file_download_done,
                           Colors.blueAccent, () {}),
                     ],
                   )),
