@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_download/routes/download_route.dart';
 import 'package:flutter_download/routes/video_list_route.dart';
 
 void main() {
@@ -15,7 +16,10 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      routes: {'videoList': (context) => VideoListRoute()},
+      routes: {
+        'videoList': (context) => VideoListRoute(),
+        'download': (context) => DownloadRoute(),
+      },
       home: MyHomePage(title: 'Flutter Download Home Page'),
     );
   }
@@ -84,8 +88,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       _buildCard('视频', Icons.live_tv, Colors.pinkAccent, () {
                         Navigator.pushNamed(context, 'videoList');
                       }),
-                      _buildCard('下载', Icons.file_download_done,
-                          Colors.blueAccent, () {}),
+                      _buildCard(
+                          '下载', Icons.file_download_done, Colors.blueAccent,
+                          () {
+                        Navigator.pushNamed(context, 'download');
+                      }),
                     ],
                   )),
             ],

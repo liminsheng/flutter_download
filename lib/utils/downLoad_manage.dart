@@ -49,7 +49,7 @@ class DownLoadManage {
       fileExists = true;
     }
     print("开始：" + downloadStart.toString());
-    if (fileExists && downloadingUrls.containsKey(url)) {
+    if (fileExists && downloadingUrls.containsKey(url) && downloadingUrls[url].isCancelled == false) {
       //正在下载
       return;
     }
@@ -81,7 +81,7 @@ class DownLoadManage {
         Future future = completer.future;
 
         int received = start;
-        int total = int.parse(response.headers.value(Headers.contentLengthHeader));
+        int total = received + int.parse(response.headers.value(Headers.contentLengthHeader));
         Stream<List<int>> stream = response.data.stream;
         StreamSubscription subscription;
         Future asyncWrite;
