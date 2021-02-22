@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_download/models/index.dart';
+import 'package:flutter_download/utils/downLoad_manage.dart';
+import 'package:path_provider/path_provider.dart';
 
 class VideoListRoute extends StatefulWidget {
   @override
@@ -31,10 +34,10 @@ class _VideoListRouteState extends State<VideoListRoute> {
             } else {
               var downloadList = snapshot.data;
               return ListView.builder(
-                itemCount: downloadList.length,
+                  itemCount: downloadList.length,
                   itemBuilder: (BuildContext context, int index) {
-                return _buildItem(downloadList[index]);
-              });
+                    return _buildItem(downloadList[index]);
+                  });
             }
           } else {
             return _loading;
@@ -55,6 +58,37 @@ class _VideoListRouteState extends State<VideoListRoute> {
   }
 
   Widget _buildItem(Video video) {
-    return ListTile(title: Text(video.title));
+    return ListTile(
+      title: Text(video.title),
+      onTap: () {
+        startDownload(video.episodes[0]);
+      },
+    );
+  }
+
+  startDownload(Episode episode) async {
+    if (DownLoadManage().downloadingUrls[episode.url]?.isCancelled == false) {
+      DownLoadManage().stop(episode.url);
+    } else {
+      var savePath = await DownLoadManage().getPhoneLocalPath(context);
+      File f = File(savePath + DownLoadManage().getFileName(episode));
+      if (!await f.exists()) {
+        f.createSync(recursive: true);
+      }
+      await DownLoadManage().download(episode.url, f.path,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              print("下载已接收：" +
+                  received.toString() +
+                  "总共：" +
+                  total.toString() +
+                  "进度：+${(received / total * 100).floor()}%");
+            }
+          }, done: () {
+            print("下载完成");
+          }, failed: (e) {
+            print("下载失败：" + e.toString());
+          });
+    }
   }
 }
