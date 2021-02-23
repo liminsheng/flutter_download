@@ -8,5 +8,6 @@
   "type": "tv",
   "size": 0,
   "progress": 0,
-  "finish": false
+  "finish": false,
+  "path": ""
 }

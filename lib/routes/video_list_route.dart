@@ -74,7 +74,7 @@ class _VideoListRouteState extends State<VideoListRoute> {
       if (!await f.exists()) {
         f.createSync(recursive: true);
       }
-      await DownLoadManage().download(episode.url, f.path,
+      await DownLoadManage().download(episode, f.path,
           onReceiveProgress: (received, total) {
             if (total != -1) {
               print("下载已接收：" +

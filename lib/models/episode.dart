@@ -16,7 +16,8 @@ class Episode {
     num size;
     num progress;
     bool finish;
-    
+    String path;
+
     factory Episode.fromJson(Map<String,dynamic> json) => _$EpisodeFromJson(json);
     Map<String, dynamic> toJson() => _$EpisodeToJson(this);
 }

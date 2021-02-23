@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_download/models/episode.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'download_provider.dart';
+
 /*
  * 文件下载
  * 懒加载单例
@@ -21,9 +23,12 @@ class DownLoadManage {
   // 静态私有成员，没有初始化
   static DownLoadManage _instance;
 
+  DownloadProvider _downloadHelp;
+
   // 私有构造函数
   DownLoadManage._() {
     // 具体初始化代码
+    _downloadHelp = DownloadProvider();
   }
 
   // 静态、同步、私有访问点
@@ -37,7 +42,7 @@ class DownLoadManage {
   /*
    *下载
    */
-  Future download(url, savePath,
+  Future download(Episode episode, savePath,
       {ProgressCallback onReceiveProgress,
       Function done,
       Function failed}) async {
@@ -49,6 +54,7 @@ class DownLoadManage {
       fileExists = true;
     }
     print("开始：" + downloadStart.toString());
+    var url = episode.url;
     if (fileExists && downloadingUrls.containsKey(url) && downloadingUrls[url].isCancelled == false) {
       //正在下载
       return;
@@ -62,6 +68,10 @@ class DownLoadManage {
     }
     CancelToken cancelToken = new CancelToken();
     downloadingUrls[url] = cancelToken;
+    episode..path = savePath
+    ..progress = downloadStart
+    ..size = contentLength;
+    await _downloadHelp.insert(episode);
 
     Future downloadByDio(String url, int start) async {
       try {
@@ -107,6 +117,9 @@ class DownLoadManage {
               await raf.close();
               completer.complete(response);
               downloadingUrls.remove(url);
+              episode..finish = true
+              ..progress = episode.size;
+              await _downloadHelp.update(episode);
               if (done != null) {
                 done();
               }
@@ -123,6 +136,8 @@ class DownLoadManage {
               await asyncWrite;
               await raf.close();
               downloadingUrls.remove(url);
+              episode.progress = received;
+              await _downloadHelp.update(episode);
               if (failed != null) {
                 failed(e);
               }
