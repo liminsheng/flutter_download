@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_download/models/episode.dart';
+import 'package:flutter_download/utils/downLoad_manage.dart';
 import 'package:flutter_download/utils/download_provider.dart';
 
 class DownloadedPage extends StatefulWidget {
@@ -10,6 +11,7 @@ class DownloadedPage extends StatefulWidget {
 
 class _DownloadedPageState extends State<DownloadedPage> {
   DownloadProvider downloadProvider = DownloadProvider();
+  DownLoadManage downLoadManage = DownLoadManage();
   Future loadDataFuture;
 
   @override
@@ -63,22 +65,22 @@ class _DownloadedPageState extends State<DownloadedPage> {
   }
 
   Widget get _noData => Center(
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('没有已下载的视频哦！',
-            style: TextStyle(color: Colors.grey, fontSize: 18)),
-        InkWell(
-          child: Icon(Icons.refresh, color: Colors.grey),
-          onTap: () {
-            setState(() {
-              loadDataFuture = getData();
-            });
-          },
-        )
-      ],
-    ),
-  );
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('没有已下载的视频哦！',
+                style: TextStyle(color: Colors.grey, fontSize: 18)),
+            InkWell(
+              child: Icon(Icons.refresh, color: Colors.grey),
+              onTap: () {
+                setState(() {
+                  loadDataFuture = getData();
+                });
+              },
+            )
+          ],
+        ),
+      );
 
   Future<List<Episode>> getData() async {
     var list = await downloadProvider.getEpisodes(true);
@@ -104,7 +106,15 @@ class _DownloadedPageState extends State<DownloadedPage> {
         ),
       ),
       title: Text(episode.title),
-      subtitle: Text('第${episode.episode}集'),
+      subtitle: Row(
+        children: [
+          Expanded(
+              flex: 1,
+              child:
+                  Text(episode.type == 'movie' ? '' : '第${episode.episode}集')),
+          Text(downLoadManage.getFormatSize(episode.size))
+        ],
+      ),
       onTap: () {
         // Navigator.pushNamed(context, 'downloadPlay', arguments: episode);
       },

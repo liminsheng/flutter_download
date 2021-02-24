@@ -40,6 +40,15 @@ class DownLoadManage {
     return _instance;
   }
 
+  Future<String> getSavePath(BuildContext context, Episode episode) async {
+    var savePath = await DownLoadManage().getPhoneLocalPath(context);
+    File f = File(savePath + DownLoadManage().getFileName(episode));
+    if (!await f.exists()) {
+      f.createSync(recursive: true);
+    }
+    return f.path;
+  }
+
   /*
    *下载
    */
@@ -56,7 +65,9 @@ class DownLoadManage {
     }
     print("开始：" + downloadStart.toString());
     var url = episode.url;
-    if (fileExists && downloadingUrls.containsKey(url) && downloadingUrls[url].isCancelled == false) {
+    if (fileExists &&
+        downloadingUrls.containsKey(url) &&
+        downloadingUrls[url].isCancelled == false) {
       //正在下载
       return;
     }
@@ -64,15 +75,19 @@ class DownLoadManage {
     int contentLength = await _getContentLength(dio, url);
     if (downloadStart == contentLength) {
       //存在本地文件，命中缓存
-      done();
+      if (done != null) {
+        done();
+      }
       return;
     }
     CancelToken cancelToken = new CancelToken();
     downloadingUrls[url] = cancelToken;
+    episode.state = 0;
     downloadingEpisodes[url] = episode;
-    episode..path = savePath
-    ..progress = downloadStart
-    ..size = contentLength;
+    episode
+      ..path = savePath
+      ..progress = downloadStart
+      ..size = contentLength;
     await _downloadHelp.insert(episode);
 
     Future downloadByDio(String url, int start) async {
@@ -93,7 +108,8 @@ class DownLoadManage {
         Future future = completer.future;
 
         int received = start;
-        int total = received + int.parse(response.headers.value(Headers.contentLengthHeader));
+        int total = received +
+            int.parse(response.headers.value(Headers.contentLengthHeader));
         Stream<List<int>> stream = response.data.stream;
         StreamSubscription subscription;
         Future asyncWrite;
@@ -104,8 +120,8 @@ class DownLoadManage {
             asyncWrite = raf.writeFrom(data).then((_raf) {
               // Notify progress
               received += data.length;
+              downloadingEpisodes[url].progress = received;
               if (onReceiveProgress != null) {
-                downloadingEpisodes[url].progress = received;
                 onReceiveProgress(received, total);
               }
               raf = _raf;
@@ -120,8 +136,9 @@ class DownLoadManage {
               await raf.close();
               completer.complete(response);
               downloadingUrls.remove(url);
-              episode..finish = true
-              ..progress = episode.size;
+              episode
+                ..finish = true
+                ..progress = episode.size;
               await _downloadHelp.update(episode);
               if (done != null) {
                 done();
@@ -204,6 +221,7 @@ class DownLoadManage {
   void stop(String url) async {
     if (downloadingUrls.containsKey(url)) {
       downloadingUrls[url].cancel();
+      downloadingEpisodes[url].state = 1;
       await _downloadHelp.update(downloadingEpisodes[url]);
     }
   }
@@ -249,4 +267,31 @@ class DownLoadManage {
     return '/' + episode.parentId + '/' + split.last;
   }
 
+  getFormatSize(size) {
+    String formatSize = "";
+    String suffix = "  B";
+    //内存转换
+    if (size < 0.1 * 1024) {
+      //小于0.1KB，则转化成B
+      formatSize = size.toString();
+      suffix = " B";
+    } else if (size < 0.1 * 1024 * 1024) {
+      //小于0.1MB，则转化成KB
+      formatSize = (size / 1024).toString();
+      suffix = " KB";
+    } else if (size < 0.1 * 1024 * 1024 * 1024) {
+      //小于0.1GB，则转化成MB
+      formatSize = (size / (1024 * 1024)).toString();
+      suffix = " MB";
+    } else {
+      //其他转化成GB
+      formatSize = (size / (1024 * 1024 * 1024)).toString();
+      suffix = " GB";
+    }
+    if (formatSize.contains('.') &&
+        formatSize.length - formatSize.indexOf('.') > 2) {
+      formatSize = formatSize.substring(0, formatSize.indexOf('.') + 3);
+    }
+    return formatSize + suffix;
+  }
 }

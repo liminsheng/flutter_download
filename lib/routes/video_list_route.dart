@@ -69,12 +69,8 @@ class _VideoListRouteState extends State<VideoListRoute> {
     if (DownLoadManage().downloadingUrls[episode.url]?.isCancelled == false) {
       DownLoadManage().stop(episode.url);
     } else {
-      var savePath = await DownLoadManage().getPhoneLocalPath(context);
-      File f = File(savePath + DownLoadManage().getFileName(episode));
-      if (!await f.exists()) {
-        f.createSync(recursive: true);
-      }
-      await DownLoadManage().download(episode, f.path,
+      var savePath = await DownLoadManage().getSavePath(context, episode);
+      await DownLoadManage().download(episode, savePath,
           onReceiveProgress: (received, total) {
             if (total != -1) {
               print("下载已接收：" +

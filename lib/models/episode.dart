@@ -17,7 +17,8 @@ class Episode {
     num progress;
     bool finish;
     String path;
-
+    num state;
+    
     factory Episode.fromJson(Map<String,dynamic> json) => _$EpisodeFromJson(json);
     Map<String, dynamic> toJson() => _$EpisodeToJson(this);
 }

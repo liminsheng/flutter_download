@@ -18,7 +18,8 @@ Episode _$EpisodeFromJson(Map<String, dynamic> json) {
     ..size = json['size'] as num
     ..progress = json['progress'] as num
     ..finish = json['finish'] as bool
-    ..path = json['path'] as String;
+    ..path = json['path'] as String
+    ..state = json['state'] as num;
 }
 
 Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
@@ -32,5 +33,6 @@ Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
       'size': instance.size,
       'progress': instance.progress,
       'finish': instance.finish,
-      'path': instance.path
+      'path': instance.path,
+      'state': instance.state
     };

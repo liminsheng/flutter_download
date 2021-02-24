@@ -13,6 +13,7 @@ class DownloadingPage extends StatefulWidget {
 
 class _DownloadingPageState extends State<DownloadingPage> {
   DownloadProvider downloadProvider = DownloadProvider();
+  DownLoadManage downLoadManage = DownLoadManage();
   Future loadDataFuture;
 
   @override
@@ -89,31 +90,44 @@ class _DownloadingPageState extends State<DownloadingPage> {
   }
 
   Widget _buildItem(Episode episode) {
+    var title = episode.type == 'movie'
+        ? episode.title
+        : episode.title + '第${episode.episode}集';
     return ListTile(
-      leading: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Container(
-          width: 100,
-          child: CachedNetworkImage(
-            imageUrl: episode.cover,
-            fit: BoxFit.cover,
-            placeholder: (context, url) {
-              return Image.asset(
-                'images/placeholder_video.png',
-                fit: BoxFit.cover,
-              );
-            },
+      leading: Stack(alignment: Alignment.center, children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            width: 100,
+            child: CachedNetworkImage(
+              imageUrl: episode.cover,
+              fit: BoxFit.cover,
+              placeholder: (context, url) {
+                return Image.asset(
+                  'images/placeholder_video.png',
+                  fit: BoxFit.cover,
+                );
+              },
+            ),
           ),
         ),
-      ),
+        episode.state == 1
+            ? Icon(Icons.play_circle_outline, color: Colors.white, size: 36)
+            : Container(
+                width: 100,
+              )
+      ]),
       title: Text(
-        episode.title + '第${episode.episode}集',
+        title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: _buildSubtitle(context, episode),
       onTap: () {
-        // Navigator.pushNamed(context, 'downloadPlay', arguments: episode);
+        setState(() {
+          episode.state = episode.state == 0 ? 1 : 0;
+        });
+        _toggleDownload(episode);
       },
     );
   }
@@ -124,50 +138,29 @@ class _DownloadingPageState extends State<DownloadingPage> {
       //initialData: ,// a Stream<int> or null
       builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
         if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-            return Text('没有Stream');
-          case ConnectionState.waiting:
-            return Text('等待下载...');
-          case ConnectionState.active:
-            return _buildState(context, snapshot.data, episode);
-          case ConnectionState.done:
-            return Text('下载完成');
-        }
-        return null; // unreachable
+        return _buildState(
+            context, snapshot.data ?? 0, episode, snapshot.connectionState);
       },
     );
   }
 
-  Widget _buildState(BuildContext context, int data, Episode episode) {
-    getFormatSize(size) {
-      String formatSize = "";
-      String suffix = "  B";
-      //内存转换
-      if (size < 0.1 * 1024) {
-        //小于0.1KB，则转化成B
-        formatSize = size.toString();
-        suffix = " B";
-      } else if (size < 0.1 * 1024 * 1024) {
-        //小于0.1MB，则转化成KB
-        formatSize = (size / 1024).toString();
-        suffix = " KB";
-      } else if (size < 0.1 * 1024 * 1024 * 1024) {
-        //小于0.1GB，则转化成MB
-        formatSize = (size / (1024 * 1024)).toString();
-        suffix = " MB";
-      } else {
-        //其他转化成GB
-        formatSize = (size / (1024 * 1024 * 1024)).toString();
-        suffix = " GB";
-      }
-      if (formatSize.contains('.') &&
-          formatSize.length - formatSize.indexOf('.') > 2) {
-        formatSize = formatSize.substring(0, formatSize.indexOf('.') + 3);
-      }
-      return formatSize + suffix;
+  Widget _buildState(BuildContext context, int data, Episode episode,
+      ConnectionState connectionState) {
+    var state = '';
+    switch (connectionState) {
+      case ConnectionState.waiting:
+        state = '等待下载...';
+        break;
+      case ConnectionState.active:
+        state = episode.state == 0 ? '正在下载' : '已暂停';
+        break;
+      case ConnectionState.done:
+        state = '下载完成';
+        break;
+      case ConnectionState.none:
+        state = '没有Stream';
+        break;
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -175,15 +168,30 @@ class _DownloadingPageState extends State<DownloadingPage> {
           padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
           child: LinearProgressIndicator(value: data.toDouble() / episode.size),
         ),
-        Text(
-            '${getFormatSize(data)}/${getFormatSize(episode.size)}'),
+        Row(children: [
+          Expanded(child: Text(state)),
+          Text(
+              '${downLoadManage.getFormatSize(data)}/${downLoadManage.getFormatSize(episode.size)}'),
+        ]),
       ],
     );
   }
 
   Stream<int> getDownloadState(Episode episode) {
     return Stream.periodic(Duration(seconds: 1), (i) {
-      return DownLoadManage().downloadingEpisodes[episode.url]?.progress ?? episode.progress;
+      var progress =
+          downLoadManage.downloadingEpisodes[episode.url]?.progress ??
+              episode.progress;
+      return progress;
     });
+  }
+
+  _toggleDownload(Episode episode) async {
+    if (downLoadManage.downloadingUrls[episode.url]?.isCancelled == false) {
+      downLoadManage.stop(episode.url);
+    } else {
+      var savePath = await DownLoadManage().getSavePath(context, episode);
+      await downLoadManage.download(episode, savePath);
+    }
   }
 }
