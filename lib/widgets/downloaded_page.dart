@@ -63,20 +63,22 @@ class _DownloadedPageState extends State<DownloadedPage> {
   }
 
   Widget get _noData => Center(
-        child: Wrap(
-          children: [
-            Text('没有下载的视频哦！'),
-            InkWell(
-              child: Icon(Icons.refresh),
-              onTap: () {
-                setState(() {
-                  loadDataFuture = getData();
-                });
-              },
-            )
-          ],
-        ),
-      );
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('没有已下载的视频哦！',
+            style: TextStyle(color: Colors.grey, fontSize: 18)),
+        InkWell(
+          child: Icon(Icons.refresh, color: Colors.grey),
+          onTap: () {
+            setState(() {
+              loadDataFuture = getData();
+            });
+          },
+        )
+      ],
+    ),
+  );
 
   Future<List<Episode>> getData() async {
     var list = await downloadProvider.getEpisodes(true);

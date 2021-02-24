@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_download/models/episode.dart';
+import 'package:flutter_download/utils/downLoad_manage.dart';
 import 'package:flutter_download/utils/download_provider.dart';
 
 class DownloadingPage extends StatefulWidget {
@@ -63,11 +66,13 @@ class _DownloadingPageState extends State<DownloadingPage> {
   }
 
   Widget get _noData => Center(
-        child: Wrap(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('没有下载中的视频哦！'),
+            Text('没有下载中的视频哦！',
+                style: TextStyle(color: Colors.grey, fontSize: 18)),
             InkWell(
-              child: Icon(Icons.refresh),
+              child: Icon(Icons.refresh, color: Colors.grey),
               onTap: () {
                 setState(() {
                   loadDataFuture = getData();
@@ -101,7 +106,11 @@ class _DownloadingPageState extends State<DownloadingPage> {
           ),
         ),
       ),
-      title: Text(episode.title + '第${episode.episode}集'),
+      title: Text(
+        episode.title + '第${episode.episode}集',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: _buildSubtitle(context, episode),
       onTap: () {
         // Navigator.pushNamed(context, 'downloadPlay', arguments: episode);
@@ -111,7 +120,7 @@ class _DownloadingPageState extends State<DownloadingPage> {
 
   Widget _buildSubtitle(BuildContext context, Episode episode) {
     return StreamBuilder<int>(
-      stream: counter(), //
+      stream: getDownloadState(episode), //
       //initialData: ,// a Stream<int> or null
       builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
         if (snapshot.hasError) return Text('Error: ${snapshot.error}');
@@ -121,7 +130,7 @@ class _DownloadingPageState extends State<DownloadingPage> {
           case ConnectionState.waiting:
             return Text('等待下载...');
           case ConnectionState.active:
-            return _buildProgress(context, snapshot.data, episode);
+            return _buildState(context, snapshot.data, episode);
           case ConnectionState.done:
             return Text('下载完成');
         }
@@ -130,7 +139,7 @@ class _DownloadingPageState extends State<DownloadingPage> {
     );
   }
 
-  Widget _buildProgress(BuildContext context, int data, Episode episode) {
+  Widget _buildState(BuildContext context, int data, Episode episode) {
     getFormatSize(size) {
       String formatSize = "";
       String suffix = "  B";
@@ -164,16 +173,17 @@ class _DownloadingPageState extends State<DownloadingPage> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
-          child: LinearProgressIndicator(value: data.toDouble() / 100),
+          child: LinearProgressIndicator(value: data.toDouble() / episode.size),
         ),
-        Text('${getFormatSize(data * 1024 * 100)}/${getFormatSize(episode.size)}'),
+        Text(
+            '${getFormatSize(data)}/${getFormatSize(episode.size)}'),
       ],
     );
   }
 
-  Stream<int> counter() {
+  Stream<int> getDownloadState(Episode episode) {
     return Stream.periodic(Duration(seconds: 1), (i) {
-      return i;
+      return DownLoadManage().downloadingEpisodes[episode.url]?.progress ?? episode.progress;
     });
   }
 }

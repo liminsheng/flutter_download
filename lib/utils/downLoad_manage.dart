@@ -16,6 +16,7 @@ class DownLoadManage {
   //用于记录正在下载的url，避免重复下载
 //  var downloadingUrls = new List();
   var downloadingUrls = new Map<String, CancelToken>();
+  var downloadingEpisodes = new Map<String, Episode>();
 
   // 单例公开访问点
   factory DownLoadManage() => _getInstance();
@@ -68,6 +69,7 @@ class DownLoadManage {
     }
     CancelToken cancelToken = new CancelToken();
     downloadingUrls[url] = cancelToken;
+    downloadingEpisodes[url] = episode;
     episode..path = savePath
     ..progress = downloadStart
     ..size = contentLength;
@@ -103,6 +105,7 @@ class DownLoadManage {
               // Notify progress
               received += data.length;
               if (onReceiveProgress != null) {
+                downloadingEpisodes[url].progress = received;
                 onReceiveProgress(received, total);
               }
               raf = _raf;
@@ -125,6 +128,7 @@ class DownLoadManage {
               }
             } catch (e) {
               downloadingUrls.remove(url);
+              downloadingEpisodes.remove(url);
               completer.completeError(_assureDioError(e));
               if (failed != null) {
                 failed(e);
@@ -136,6 +140,7 @@ class DownLoadManage {
               await asyncWrite;
               await raf.close();
               downloadingUrls.remove(url);
+              downloadingEpisodes.remove(url);
               episode.progress = received;
               await _downloadHelp.update(episode);
               if (failed != null) {
@@ -176,6 +181,7 @@ class DownLoadManage {
           }
         }
         downloadingUrls.remove(url);
+        downloadingEpisodes.remove(url);
       }
     }
 
@@ -195,9 +201,10 @@ class DownLoadManage {
     }
   }
 
-  void stop(String url) {
+  void stop(String url) async {
     if (downloadingUrls.containsKey(url)) {
       downloadingUrls[url].cancel();
+      await _downloadHelp.update(downloadingEpisodes[url]);
     }
   }
 
