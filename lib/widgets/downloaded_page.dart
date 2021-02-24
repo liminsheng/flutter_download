@@ -92,12 +92,12 @@ class _DownloadedPageState extends State<DownloadedPage> {
           child: CachedNetworkImage(
             imageUrl: episode.cover,
             fit: BoxFit.cover,
-            // placeholder: (context, url) {
-            //   return Image.asset(
-            //     'images/default_placeholder.png',
-            //     fit: BoxFit.cover,
-            //   );
-            // },
+            placeholder: (context, url) {
+              return Image.asset(
+                'images/placeholder_video.png',
+                fit: BoxFit.cover,
+              );
+            },
           ),
         ),
       ),

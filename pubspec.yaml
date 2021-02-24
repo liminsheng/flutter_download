@@ -55,6 +55,7 @@ flutter:
   assets:
     - assets/download_list.json
     - images/bg_home.jpg
+    - images/placeholder_video.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
